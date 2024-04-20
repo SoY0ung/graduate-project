@@ -5,7 +5,7 @@ import os
 import subprocess
 import matplotlib.pyplot as plt
 
-import faceutil
+from faceutil import FaceUtil
 
 database_path = 'database/'
 
@@ -59,10 +59,11 @@ class FaceRecognitionCLI(cmd2.Cmd):
     """
     prompt = "(user) "
     intro = "欢迎使用人脸识别系统！输入 ? 或 help 获取命令列表。"
+    dbPath = 'database/'
 
     def __init__(self):
         super().__init__()
-
+        self.faceutil = FaceUtil(database_path=self.dbPath)
         # 创建人脸管理二级菜单
         self.face_management_menu = FaceManagementMenu()
 
@@ -84,15 +85,19 @@ class FaceRecognitionCLI(cmd2.Cmd):
         print("提示：即将打开相机，取景框左上角倒计时结束后会自动拍照")
         os.system('pause')
 
-        camface = faceutil.get_cam_faces()
+        camface = self.faceutil.get_cam_faces()
         if len(camface) > 0:
             camface = camface[0]
         else:
             print("未检测到人脸!")
             return
-        plt.imshow(camface)
-        plt.show()
-        print("人脸比对完成。欢迎您！")
+        # plt.imshow(camface)
+        # plt.show()
+        name, dist = self.faceutil.recognize_face(camface)
+        if dist>0.92:
+            print("未找到匹配的人脸！")
+        else:
+            print(f"你好，{name}")
 
     @cmd2.with_category("人脸比对系统")
     def do_选择图片pic(self, arg):
@@ -100,16 +105,19 @@ class FaceRecognitionCLI(cmd2.Cmd):
         print("请选择图片进行人脸比对...")
         path = image_picker_win()
         img = Image.open(path)
-        img = faceutil.get_img_faces(img)
+        img = self.faceutil.get_img_faces(img)
         if len(img) > 0:
             img = img[0]
         else:
             print("未检测到人脸!")
             return
-        plt.imshow(img)
-        plt.show()
-        # 在这里实现选择图片和进行人脸比对的逻辑
-        print("人脸比对完成。欢迎您！")
+        # plt.imshow(img)
+        # plt.show()
+        name, dist = self.faceutil.recognize_face(img)
+        if dist>0.92:
+            print("未找到匹配的人脸！")
+        else:
+            print(f"你好，{name}")
 
     @cmd2.with_category("管理员")
     def do_管理员登录su(self, arg):
