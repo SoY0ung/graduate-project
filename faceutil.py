@@ -1,9 +1,13 @@
 import cv2
-from mtcnn.detector import detect_faces
-from PIL import Image, ImageFont, ImageDraw
 import numpy as np
+from PIL import Image, ImageFont, ImageDraw
 
-def detect_cam_faces(countdown = 30):
+from mtcnn.detector import detect_faces
+from facenet.network import Facenet
+
+# Recommended threshold 0.92
+
+def get_cam_faces(countdown = 30):
     cap = cv2.VideoCapture(0)
     while True:
         _, frame = cap.read()
@@ -37,3 +41,22 @@ def detect_cam_faces(countdown = 30):
             cap.release()
             cv2.destroyWindow('camera')
             return face_images
+        
+def get_img_faces(img):
+    bounding_boxes, _ = detect_faces(img)
+    # 裁剪检测到的人脸
+    face_images = []
+
+    if bounding_boxes is not None:
+        for box in bounding_boxes:
+            box = box[:4].astype(int)  # 取前四个整数值为坐标
+            face = img.crop((box[0], box[1], box[2], box[3]))
+            face_images.append(face)
+    return face_images
+
+def get_distance(faceImg_1, faceImg_2, debug=False):
+    model = Facenet(detail=debug)
+    
+    dist = model.detect_image(faceImg_1, faceImg_2, show=debug).item()
+    print(dist)
+    return dist
