@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import os
 from PIL import Image, ImageFont, ImageDraw
 
 from mtcnn.detector import detect_faces
@@ -54,9 +55,33 @@ def get_img_faces(img):
             face_images.append(face)
     return face_images
 
+# 获取人脸图片的距离
 def get_distance(faceImg_1, faceImg_2, debug=False):
     model = Facenet(detail=debug)
-    
     dist = model.detect_image(faceImg_1, faceImg_2, show=debug).item()
     print(dist)
     return dist
+
+# 获取人脸图片的特征向量
+def get_feature(faceImg, debug=False):
+    model = Facenet(detail=debug)
+    face_embedding = model.generate_feature_vector(faceImg)
+    return face_embedding
+
+
+# 为本地人脸库生成特征向量
+def create_face_database(folder_path, debug=False):
+    model = Facenet(detail=debug)
+    face_embeddings = {}
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".jpg"):
+            name = filename.split('.')[0]  # 假设文件名即人名
+            image_path = os.path.join(folder_path, filename)
+            image = Image.open(image_path)
+            face_embedding = model.generate_feature_vector(image)
+            face_embeddings[name] = face_embedding
+    return face_embeddings
+
+# 获取特征向量的距离
+def get_feature_distance(feature_1, feature_2):
+    return np.linalg.norm(feature_1 - feature_2, axis=1).item()

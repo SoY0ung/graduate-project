@@ -1,8 +1,13 @@
 from PIL import Image
-from calc_face import face_distance
-
 import cmd2
 import getpass
+import os
+import subprocess
+import matplotlib.pyplot as plt
+
+import faceutil
+
+database_path = 'database/'
 
 class FaceManagementMenu(cmd2.Cmd):
     """人脸管理 二级菜单"""
@@ -76,14 +81,33 @@ class FaceRecognitionCLI(cmd2.Cmd):
     @cmd2.with_category("人脸比对系统")
     def do_打开相机cam(self, arg):
         """打开相机进行人脸比对。"""
-        print("正在打开相机进行人脸比对...")
-        # 在这里实现具体的人脸比对逻辑
+        print("提示：即将打开相机，取景框左上角倒计时结束后会自动拍照")
+        os.system('pause')
+
+        camface = faceutil.get_cam_faces()
+        if len(camface) > 0:
+            camface = camface[0]
+        else:
+            print("未检测到人脸!")
+            return
+        plt.imshow(camface)
+        plt.show()
         print("人脸比对完成。欢迎您！")
 
     @cmd2.with_category("人脸比对系统")
     def do_选择图片pic(self, arg):
         """选择图片进行人脸比对。"""
         print("请选择图片进行人脸比对...")
+        path = image_picker_win()
+        img = Image.open(path)
+        img = faceutil.get_img_faces(img)
+        if len(img) > 0:
+            img = img[0]
+        else:
+            print("未检测到人脸!")
+            return
+        plt.imshow(img)
+        plt.show()
         # 在这里实现选择图片和进行人脸比对的逻辑
         print("人脸比对完成。欢迎您！")
 
@@ -123,6 +147,18 @@ class FaceRecognitionCLI(cmd2.Cmd):
             print("管理员密码已成功修改。")
         else:
             print("此操作需要管理员权限。")
+
+def image_picker_win():
+    PS_Commands = "Add-Type -AssemblyName System.Windows.Forms;"
+    PS_Commands += "$fileBrowser = New-Object System.Windows.Forms.OpenFileDialog;"
+    PS_Commands += '$fileBrowser.Title = "请选择图片";'
+    PS_Commands += '$fileBrowser.Filter = "JPEG files (*.jpg)|*.jpg";'
+    PS_Commands += "$Null = $fileBrowser.ShowDialog();"
+    PS_Commands += "echo $fileBrowser.FileName"
+    file_path = subprocess.run(["powershell.exe", PS_Commands], stdout=subprocess.PIPE)
+    file_path = file_path.stdout.decode()
+    file_path = file_path.rstrip()
+    return file_path
 
 
 if __name__ == '__main__':

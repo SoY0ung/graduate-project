@@ -84,3 +84,19 @@ class Facenet(object):
             plt.text(-12, -12, 'Distance:%.3f' % l1, ha='center', va= 'bottom',fontsize=11)
             plt.show()
         return l1
+    
+    def generate_feature_vector(self, face_image):
+         #   图片预处理，归一化
+        with torch.no_grad():
+            face_image = resize_image(face_image, [self.input_shape[1], self.input_shape[0]], letterbox_image=self.letterbox_image)
+            photo_1 = torch.from_numpy(np.expand_dims(np.transpose(preprocess_input(np.array(face_image, np.float32)), (2, 0, 1)), 0))
+            
+            if self.cuda:
+                photo_1 = photo_1.cuda()
+                
+            #   传入网络进行预测
+            output1 = self.net(photo_1).cpu().numpy()
+
+        return output1
+
+
