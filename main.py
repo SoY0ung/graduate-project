@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from faceutil import FaceUtil
 
 database_path = 'database/'
+faceutil = None
+threshold = 1.10
 
 class FaceManagementMenu(cmd2.Cmd):
     """人脸管理 二级菜单"""
@@ -18,35 +20,96 @@ class FaceManagementMenu(cmd2.Cmd):
         super().__init__()
         # 添加命令别名
         shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
-        shortcuts.update({'？':'help', 'exit': '返回',
+        shortcuts.update({'？':'help', 'exit': '返回exit',
                           'add': '添加人脸add', 'update': '更新人脸update',
-                          'modify': '修改人脸modify', 'remove': '删除人脸remove',})
+                          'remove': '删除人脸remove',})
         cmd2.Cmd.__init__(self, shortcuts=shortcuts)
 
 
     @cmd2.with_category("人脸管理")
     def do_添加人脸add(self, arg):
-        """添加新的人脸数据。"""
-        print("添加新的人脸数据...")
+        print('请选择添加方式（输入数字）：')
+        opt = int(input('[1] 从相机中添加\n[2] 从文件中添加\n'))
+        face = None
+        if opt == 1:
+            print("提示：即将打开相机，取景框左上角倒计时结束后会自动拍照")
+            os.system('pause')
+            face = faceutil.get_cam_faces()
+            if len(face) > 0:
+                face = face[0]
+            else:
+                print("未检测到人脸!")
+                return
+        elif opt == 2:
+            print("请选择包含人脸的图片进行添加...")
+            path = image_picker_win()
+            face = Image.open(path)
+            face = faceutil.get_img_faces(face)
+            if len(face) > 0:
+                face = face[0]
+            else:
+                print("未检测到人脸!")
+                return
+        if face is not None:
+            name = input('请输入人脸名称：')
+            if faceutil.add_face(face, name):
+                print('成功添加人脸：'+name)
+            else:
+                print('人脸名称已存在！')
         # 实现添加人脸数据的逻辑
 
     @cmd2.with_category("人脸管理")     
     def do_更新人脸update(self, arg):
-        """更新现有的人脸数据。"""
-        print("更新现有的人脸数据...")
-        # 实现更新人脸数据的逻辑
-
-    @cmd2.with_category("人脸管理")
-    def do_修改人脸modify(self, arg):
-        """修改现有的人脸数据。"""
-        print("修改现有的人脸数据...")
-        # 实现修改人脸数据的逻辑
+        names = faceutil.list_face()
+        print('系统中已有的人脸名称：')
+        print(names, sep=',')
+        name = input('请输入要更新的人脸名称：')
+        if name not in names:
+            print('人脸名称不存在！')
+            return
+        print('请选择更新方式（输入数字）：')
+        opt = int(input('[1] 从相机中更新\n[2] 从文件中更新\n'))
+        face = None
+        if opt == 1:
+            print("提示：即将打开相机，取景框左上角倒计时结束后会自动拍照")
+            os.system('pause')
+            face = faceutil.get_cam_faces()
+            if len(face) > 0:
+                face = face[0]
+            else:
+                print("未检测到人脸!")
+                return
+        elif opt == 2:
+            print("请选择包含人脸的图片进行更新...")
+            path = image_picker_win()
+            face = Image.open(path)
+            face = faceutil.get_img_faces(face)
+            if len(face) > 0:
+                face = face[0]
+            else:
+                print("未检测到人脸!")
+                return
+        if face is not None:
+            name = input('请输入人脸名称：')
+            if faceutil.update_face(face, name):
+                print('成功添加人脸：'+name)
+            else:
+                print('人脸名称不存在！')
+        # 实现添加人脸数据的逻辑
 
     @cmd2.with_category("人脸管理")
     def do_删除人脸remove(self, arg):
-        """删除人脸数据。"""
-        print("正在删除人脸数据...")
-        # 实现删除人脸数据的逻辑
+        names = faceutil.list_face()
+        print('系统中已有的人脸名称：')
+        print(names, sep=',')
+        name = input('请输入要删除的人脸名称：')
+        if name not in names:
+            print('人脸名称不存在！')
+            return
+        if faceutil.remove_face(name):
+            print('成功删除人脸：'+name)
+        else:
+            print('人脸名称不存在！')
     
     @cmd2.with_category("人脸管理")
     def do_返回exit(self, arg):
@@ -59,11 +122,9 @@ class FaceRecognitionCLI(cmd2.Cmd):
     """
     prompt = "(user) "
     intro = "欢迎使用人脸识别系统！输入 ? 或 help 获取命令列表。"
-    dbPath = 'database/'
 
     def __init__(self):
         super().__init__()
-        self.faceutil = FaceUtil(database_path=self.dbPath)
         # 创建人脸管理二级菜单
         self.face_management_menu = FaceManagementMenu()
 
@@ -85,7 +146,7 @@ class FaceRecognitionCLI(cmd2.Cmd):
         print("提示：即将打开相机，取景框左上角倒计时结束后会自动拍照")
         os.system('pause')
 
-        camface = self.faceutil.get_cam_faces()
+        camface = faceutil.get_cam_faces()
         if len(camface) > 0:
             camface = camface[0]
         else:
@@ -93,31 +154,32 @@ class FaceRecognitionCLI(cmd2.Cmd):
             return
         # plt.imshow(camface)
         # plt.show()
-        name, dist = self.faceutil.recognize_face(camface)
-        if dist>0.92:
-            print("未找到匹配的人脸！")
+        name, dist = faceutil.recognize_face(camface)
+        if dist>threshold:
+            print("未找到匹配的人脸！", name, dist)
         else:
-            print(f"你好，{name}")
+            print(f"你好，{name}", dist)
 
     @cmd2.with_category("人脸比对系统")
     def do_选择图片pic(self, arg):
         """选择图片进行人脸比对。"""
         print("请选择图片进行人脸比对...")
         path = image_picker_win()
+        # print(path)
         img = Image.open(path)
-        img = self.faceutil.get_img_faces(img)
+        img = faceutil.get_img_faces(img)
         if len(img) > 0:
             img = img[0]
         else:
-            print("未检测到人脸!")
+            print("未检测到人脸！")
             return
         # plt.imshow(img)
         # plt.show()
-        name, dist = self.faceutil.recognize_face(img)
-        if dist>0.92:
-            print("未找到匹配的人脸！")
+        name, dist = faceutil.recognize_face(img)
+        if dist>threshold:
+            print("未找到匹配的人脸！", name, dist)
         else:
-            print(f"你好，{name}")
+            print(f"你好，{name}", dist)
 
     @cmd2.with_category("管理员")
     def do_管理员登录su(self, arg):
@@ -157,7 +219,8 @@ class FaceRecognitionCLI(cmd2.Cmd):
             print("此操作需要管理员权限。")
 
 def image_picker_win():
-    PS_Commands = "Add-Type -AssemblyName System.Windows.Forms;"
+    PS_Commands = "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8;"
+    PS_Commands += "Add-Type -AssemblyName System.Windows.Forms;"
     PS_Commands += "$fileBrowser = New-Object System.Windows.Forms.OpenFileDialog;"
     PS_Commands += '$fileBrowser.Title = "请选择图片";'
     PS_Commands += '$fileBrowser.Filter = "JPEG files (*.jpg)|*.jpg";'
@@ -170,5 +233,6 @@ def image_picker_win():
 
 
 if __name__ == '__main__':
+    faceutil = FaceUtil(database_path=database_path)
     app = FaceRecognitionCLI()
     app.cmdloop()

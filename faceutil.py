@@ -11,9 +11,11 @@ from facenet.network import Facenet
 class FaceUtil:
 
     face_database = {}
+    dbPath = ''
 
     def __init__(self, database_path, **kwargs):
-        self.face_database = self.create_face_database(database_path)
+        self.dbPath = database_path
+        self.face_database = self.create_face_database(self.dbPath)
 
 
     def get_cam_faces(self, countdown = 30):
@@ -109,5 +111,41 @@ class FaceUtil:
                 min_distance = distance
                 identity = name
         return identity, min_distance
+
+    def add_face(self, input_face, face_name, debug=False):
+        if face_name not in self.face_database:
+            face_embedding = self.get_feature(input_face, debug=debug)
+            input_face.save(self.dbPath+face_name+'.jpg')
+            self.face_database[face_name] = face_embedding
+            return True
+        else:
+            return False
+        
+    def update_face(self, input_face, face_name, debug=False):
+        if face_name in self.face_database:
+            face_embedding = self.get_feature(input_face, debug=debug)
+            input_face.save(self.dbPath+face_name+'.jpg')
+            self.face_database[face_name] = face_embedding
+            return True
+        else:
+            return False
+        
+    def remove_face(self, face_name, debug=False):
+        if face_name in self.face_database:
+            picPath = self.dbPath+face_name+'.jpg'
+            del self.face_database[face_name]
+            os.remove(picPath)
+            return True
+        else:
+            return False
+        
+    def list_face(self):
+        nameList = []
+        for name, _ in self.face_database.items():
+            nameList.append(name)
+        return nameList
+
+
+
 
     
