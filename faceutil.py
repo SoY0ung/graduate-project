@@ -25,7 +25,7 @@ class FaceUtil:
             frame = cv2.flip(frame, 1) # 水平翻转
             image = Image.fromarray(cv2.cvtColor(frame,cv2.COLOR_BGR2RGB))
             draw=ImageDraw.Draw(image) #获取img的draw对象     
-            draw.text((50,50), "%d" %countdown, font=ImageFont.truetype('simhei.ttf', 64),fill=(255,255,255,255)) #使用draw对象的text方法在(10,20)处使用黑体，字体大小16，白色，显示cnt对应数字
+            draw.text((50,50), "%d" %countdown, font=ImageFont.truetype('simhei.ttf', 64),fill="blue") #使用draw对象的text方法在(10,20)处使用黑体，字体大小16，白色，显示cnt对应数字
             frame=cv2.cvtColor(np.asarray(image),cv2.COLOR_RGB2BGR)
             countdown-=1
 
