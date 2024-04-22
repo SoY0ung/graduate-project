@@ -3,28 +3,73 @@ import os
 import subprocess
 import matplotlib.pyplot as plt
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QFileDialog
-from ui import ui_app
+
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QFileDialog, QDialog
+from ui import ui_app, ui_adminDiag
 
 from faceutil import FaceUtil
 
 database_path = 'database/'
 faceutil = None
 threshold = 1.10
+pwd = '123456'
+
+class AdminDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.ui = ui_adminDiag.Ui_Dialog()  # 初始化界面
+        self.ui.setupUi(self)
+        self.setGeometry(950,450,400,200)
+        self.ui.pwdEdit 
+        # 连接信号和槽
+        self.ui.buttonBox.accepted.disconnect()
+        self.ui.buttonBox.rejected.disconnect()
+        self.ui.buttonBox.accepted.connect(self.check_password)
+        self.ui.buttonBox.rejected.connect(self.reject)
+        
+
+    def check_password(self):
+        password = self.ui.pwdEdit.text()
+        if password == pwd:
+            print("密码正确！")
+            self.accept()
+        else:
+            QMessageBox.warning(self, '错误', '密码错误，请重试！')
+            self.ui.pwdEdit.clear()
+
 
 class MainWindow(QMainWindow):
+    admin_state = False
+
     def __init__(self):
         super().__init__()
         self.ui = ui_app.Ui_MainWindow()  # 初始化界面
         self.ui.setupUi(self)
         self.setGeometry(900,300,700,800)
-
+        self.admin_state = False
         # 连接信号和槽
         self.ui.camRecoBtn.clicked.connect(self.camReco)
         self.ui.fileRecoBtn.clicked.connect(self.fileReco)
+        self.ui.switchUserBtn.clicked.connect(self.switchUser)
 
     def writeLog(self, log):
         self.ui.debugOutputTextEdit.append(f"{log}")
+
+    def switchUser(self):
+        if not self.admin_state:
+            dialog = AdminDialog()
+            if dialog.exec_():
+                self.admin_state = True
+                self.writeLog('-> Admin mode')
+                self.ui.userLb.setText('Admin（管理员）')
+                self.ui.switchUserBtn.setText('退出登录')
+                self.ui.openFaceMgrBtn.setEnabled(True)
+        else:
+            self.admin_state = False
+            self.writeLog('-> User mode')
+            self.ui.userLb.setText('User')
+            self.ui.switchUserBtn.setText('管理员登录')
+            self.ui.openFaceMgrBtn.setEnabled(False)
 
     def camReco(self):
         # 摄像头人脸比对
