@@ -10,3 +10,5 @@ tqdm==4.60.0
 Pillow==8.2.0
 h5py==2.10.0
 cmd2
+pyqt5
+pyqt5-tools
