@@ -7,21 +7,23 @@ import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QFileDialog, QDialog, QInputDialog, QLineEdit, QWidget, QVBoxLayout, QLabel
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
-from ui import ui_app, ui_adminDiag, ui_faceManagerWin
+from ui import ui_app, ui_adminDiag, ui_faceManagerWin, ui_faceIdentityWin
 
 from faceutil import FaceUtil
 
+
+## 配置区域
 database_path = 'database/'
 faceutil = None
 threshold = 1.10
 pwd = '123456'
+## 配置区域（结束）
 
 class AdminDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.ui = ui_adminDiag.Ui_Dialog()  # 初始化界面
         self.ui.setupUi(self)
-        self.setGeometry(950,450,400,200)
         self.ui.pwdEdit 
         # 连接信号和槽
         self.ui.buttonBox.accepted.disconnect()
@@ -65,7 +67,7 @@ class FaceManagerWindow(QMainWindow):
         self.logFunc = logFunc
         self.ui = ui_faceManagerWin.Ui_MainWindow()  # 初始化界面
         self.ui.setupUi(self)
-        self.logFunc('Opening Manager Window...')
+        self.logFunc('Opening face manager window...')
         self.load_face_data()
 
         # 连接信号和槽
@@ -249,9 +251,15 @@ class FaceManagerWindow(QMainWindow):
             self.ui.fileUpdBtn.setEnabled(False)
             self.ui.delBtn.setEnabled(False)
 
+class FaceIdentityWindow(QMainWindow):
 
-
-    
+    def __init__(self, faceutil, logFunc):
+        super().__init__()
+        self.faceutil = faceutil
+        self.logFunc = logFunc
+        self.ui = ui_faceIdentityWin.Ui_MainWindow()  # 初始化界面
+        self.ui.setupUi(self)
+        self.logFunc('Opening face identity window...')
 
 
 class MainWindow(QMainWindow):
@@ -261,13 +269,13 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.ui = ui_app.Ui_MainWindow()  # 初始化界面
         self.ui.setupUi(self)
-        self.setGeometry(900,300,700,800)
         self.admin_state = False
         # 连接信号和槽
         self.ui.camRecoBtn.clicked.connect(self.camReco)
         self.ui.fileRecoBtn.clicked.connect(self.fileReco)
         self.ui.switchUserBtn.clicked.connect(self.switchUser)
         self.ui.openFaceMgrBtn.clicked.connect(self.open_face_manager)
+        self.ui.faceIdentityBtn.clicked.connect(self.open_face_identity)
 
     def writeLog(self, log):
         self.ui.debugOutputTextEdit.append(f"{log}")
@@ -281,12 +289,14 @@ class MainWindow(QMainWindow):
                 self.ui.userLb.setText('Admin（管理员）')
                 self.ui.switchUserBtn.setText('退出登录')
                 self.ui.openFaceMgrBtn.setEnabled(True)
+                self.ui.faceIdentityBtn.setEnabled(True)
         else:
             self.admin_state = False
             self.writeLog('-> User mode')
             self.ui.userLb.setText('User')
             self.ui.switchUserBtn.setText('管理员登录')
             self.ui.openFaceMgrBtn.setEnabled(False)
+            self.ui.faceIdentityBtn.setEnabled(False)
 
     def camReco(self):
         # 摄像头人脸比对
@@ -357,6 +367,11 @@ class MainWindow(QMainWindow):
     def open_face_manager(self):
         self.faceManager = FaceManagerWindow(faceutil=faceutil, logFunc=self.writeLog) 
         self.faceManager.show()
+
+    def open_face_identity(self):
+        self.faceIdentity = FaceIdentityWindow(faceutil=faceutil, logFunc=self.writeLog)
+        self.faceIdentity.show()
+        
 
 if __name__ == '__main__':
     faceutil = FaceUtil(database_path=database_path)
