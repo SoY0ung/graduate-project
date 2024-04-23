@@ -1,3 +1,4 @@
+import io
 from PIL import Image
 import os
 import subprocess
@@ -7,7 +8,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QFileDialog, QDialog, QInputDialog, QLineEdit, QWidget, QVBoxLayout, QLabel
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
-from ui import ui_app, ui_adminDiag, ui_faceManagerWin, ui_faceIdentityWin
+from ui import ui_app, ui_adminDiag, ui_faceManagerWin, ui_faceIdentityWin, ui_faceSelectDiag
 
 from faceutil import FaceUtil
 
@@ -58,6 +59,40 @@ class ImageViewer(QWidget):
         layout.addWidget(self.imageLabel)
         self.setLayout(layout)
 
+class FaceSelectDialog(QDialog):
+     
+    def __init__(self, faceutil):
+        super().__init__()
+        self.faceutil = faceutil
+        self.ui = ui_faceSelectDiag.Ui_Dialog()  # 初始化界面
+        self.ui.setupUi(self)
+        self.ui.selBtn.setEnabled(False)
+        self.load_face_data()
+        # 连接信号和槽
+        self.ui.faceList.itemSelectionChanged.connect(self.on_selection_changed)
+        self.ui.faceList.doubleClicked.connect(self.chooseName)
+        self.ui.selBtn.clicked.connect(self.chooseName)
+        self.ui.cancelBtn.clicked.connect(self.close)
+
+    def load_face_data(self):
+        face_list = self.faceutil.list_face()
+        self.ui.faceList.clear()
+        for face_info in face_list:
+            self.ui.faceList.addItem(face_info) 
+    
+    def on_selection_changed(self):
+        selected_items = self.ui.faceList.selectedItems()
+        if selected_items:  # 检查列表是否不为空
+            self.ui.selBtn.setEnabled(True)
+        else:
+            self.ui.selBtn.setEnabled(False)
+
+    def chooseName(self):
+        self.accept()
+
+    def get_selected_name(self):
+        return self.ui.faceList.selectedItems()[0].text()
+  
 class FaceManagerWindow(QMainWindow):
 
     def __init__(self, faceutil, logFunc):
@@ -237,8 +272,6 @@ class FaceManagerWindow(QMainWindow):
                                 "人脸名称已存在",
                                 QMessageBox.Ok)
         
-
-
     def on_selection_changed(self):
         selected_items = self.ui.faceDataList.selectedItems()
         if selected_items:  # 检查列表是否不为空
@@ -260,8 +293,228 @@ class FaceIdentityWindow(QMainWindow):
         self.ui = ui_faceIdentityWin.Ui_MainWindow()  # 初始化界面
         self.ui.setupUi(self)
         self.logFunc('Opening face identity window...')
+        self.lpic = False
+        self.rpic = False
+        self.limg = None
+        self.rimg = None
+
+        self.ui.faceIdBtn.setEnabled(False)
+        self.ui.logLb.setStyleSheet("color: blue;")
+        # 连接信号和槽
+        self.ui.camLBtn.clicked.connect(self.camL)
+        self.ui.fileLBtn.clicked.connect(self.fileL)
+        self.ui.camRBtn.clicked.connect(self.camR)
+        self.ui.fileRBtn.clicked.connect(self.fileR)
+        self.ui.cancelBtn.clicked.connect(self.close)
+        self.ui.dbLBtn.clicked.connect(self.dbL)
+        self.ui.dbRBtn.clicked.connect(self.dbR)
+        self.ui.faceIdBtn.clicked.connect(self.faceId)
+
+    def camL(self):
+        if QMessageBox.information(self, "提示",
+                                 "即将打开相机，取景框左上角倒计时结束后会自动拍照",
+                                 QMessageBox.Ok|QMessageBox.Cancel) == QMessageBox.Cancel:
+            return
+        self.switchBtnState()
+        self.ui.logLb.setText('正在载入人脸...')
+        self.logFunc('Opening Camera...')
+        camface = faceutil.get_cam_faces()
+        if len(camface) > 0:
+            camface = camface[0]
+        else:
+            print("未检测到人脸!")
+            self.ui.logLb.setText('未检测到人脸')
+            self.logFunc('No face detected!')
+            QMessageBox.warning(self, "警告",
+                                "未检测到人脸",
+                                QMessageBox.Ok)
+            self.switchBtnState()
+            return
+        if camface is not None:
+            qt_img = self.convert_pil_to_pixmap(camface)
+            self.ui.faceLLb.setPixmap(qt_img)
+            self.lpic = True
+            self.limg = camface
+            self.checkAvailability()
+        self.switchBtnState()
+
+    def fileL(self):
+        self.switchBtnState()
+        self.ui.logLb.setText('正在载入人脸...')
+        options = QFileDialog.Options()
+        path, _ = QFileDialog.getOpenFileName(self, "选择图片", "",
+                                                  "JPEG Files (*.jpg);;All Files (*)", options=options)
+        if path:
+            self.logFunc(f"Image Path: {path}")
+            img = Image.open(path)
+            img = faceutil.get_img_faces(img)
+            if len(img) > 0:
+                img = img[0]
+            else:
+                print("未检测到人脸！")
+                self.ui.logLb.setText('未检测到人脸')
+                self.logFunc('No face detected!')
+                QMessageBox.warning(self, "警告",
+                                "未检测到人脸",
+                                QMessageBox.Ok)
+                self.switchBtnState()
+                return
+        else:
+            self.ui.logLb.setText('文件选择被取消')
+            self.switchBtnState()
+            return
+        if img is not None:
+            qt_img = self.convert_pil_to_pixmap(img)
+            self.ui.faceLLb.setPixmap(qt_img)
+            self.limg = img
+            self.lpic = True
+            self.checkAvailability()
+        self.switchBtnState()
+
+    def camR(self):
+        if QMessageBox.information(self, "提示",
+                                 "即将打开相机，取景框左上角倒计时结束后会自动拍照",
+                                 QMessageBox.Ok|QMessageBox.Cancel) == QMessageBox.Cancel:
+            return
+        self.switchBtnState()
+        self.ui.logLb.setText('正在载入人脸...')
+        self.logFunc('Opening Camera...')
+        camface = faceutil.get_cam_faces()
+        if len(camface) > 0:
+            camface = camface[0]
+        else:
+            print("未检测到人脸!")
+            self.ui.logLb.setText('未检测到人脸')
+            self.logFunc('No face detected!')
+            QMessageBox.warning(self, "警告",
+                                "未检测到人脸",
+                                QMessageBox.Ok)
+            self.switchBtnState()
+            return
+        if camface is not None:
+            qt_img = self.convert_pil_to_pixmap(camface)
+            self.ui.faceRLb.setPixmap(qt_img)
+            self.rpic = True
+            self.rimg = camface
+            self.checkAvailability()
+        self.switchBtnState()
+
+    def fileR(self):
+        self.switchBtnState()
+        self.ui.logLb.setText('正在载入人脸...')
+        options = QFileDialog.Options()
+        path, _ = QFileDialog.getOpenFileName(self, "选择图片", "",
+                                                  "JPEG Files (*.jpg);;All Files (*)", options=options)
+        if path:
+            self.logFunc(f"Image Path: {path}")
+            img = Image.open(path)
+            img = faceutil.get_img_faces(img)
+            if len(img) > 0:
+                img = img[0]
+            else:
+                print("未检测到人脸！")
+                self.ui.logLb.setText('未检测到人脸')
+                self.logFunc('No face detected!')
+                QMessageBox.warning(self, "警告",
+                                "未检测到人脸",
+                                QMessageBox.Ok)
+                self.switchBtnState()
+                return
+        else:
+            self.ui.logLb.setText('文件选择被取消')
+            self.switchBtnState()
+            return
+        if img is not None:
+            qt_img = self.convert_pil_to_pixmap(img)
+            self.ui.faceRLb.setPixmap(qt_img)
+            self.rpic = True
+            self.rimg = img
+            self.checkAvailability()
+        self.switchBtnState()
+
+    def dbL(self):
+        self.switchBtnState()
+        self.ui.logLb.setText('请在弹出的对话框中操作...')
+        dbDialog = FaceSelectDialog(faceutil=faceutil)
+        if dbDialog.exec_() == QDialog.Accepted:
+            name = dbDialog.get_selected_name()
+            path = database_path+name+'.jpg'
+            img = Image.open(path)
+            qt_img = self.convert_pil_to_pixmap(img)
+            self.ui.faceLLb.setPixmap(qt_img)
+            self.lpic = True
+            self.limg = img
+            self.checkAvailability()
+        else:
+            self.ui.logLb.setText('用户取消选取')
+        self.switchBtnState()
+
+    def dbR(self):
+        self.switchBtnState()
+        self.ui.logLb.setText('请在弹出的对话框中操作...')
+        dbDialog = FaceSelectDialog(faceutil=faceutil)
+        if dbDialog.exec_() == QDialog.Accepted:
+            name = dbDialog.get_selected_name()
+            path = database_path+name+'.jpg'
+            img = Image.open(path)
+            qt_img = self.convert_pil_to_pixmap(img)
+            self.ui.faceRLb.setPixmap(qt_img)
+            self.rpic = True
+            self.rimg = img
+            self.checkAvailability()
+        else:
+            self.ui.logLb.setText('用户取消选取')
+        self.switchBtnState()
+    
+    def faceId(self):
+        dist = self.faceutil.get_distance(self.limg, self.rimg)
+        self.logFunc(f"Face distance: {dist}")
+        if dist<threshold:
+            QMessageBox.information(self, "比对完毕",
+                                 f"两张图像是同一个人",
+                                 QMessageBox.Ok)
+            self.ui.logLb.setText('两张图像是同一个人')
+        else:
+            QMessageBox.information(self, "比对完毕",
+                                 f"两张图像不是同一个人",
+                                 QMessageBox.Ok)
+            self.ui.logLb.setText('两张图像不是同一个人')
 
 
+
+    def convert_pil_to_pixmap(self, pil_img):
+        """将 PIL Image 转换为 QPixmap"""
+        byte_array = io.BytesIO()
+        pil_img.save(byte_array, format='JPEG')  # 可以根据需要改变格式
+        q_pixmap = QPixmap()
+        q_pixmap.loadFromData(byte_array.getvalue())
+        return q_pixmap
+
+    def checkAvailability(self):
+        if self.lpic and self.rpic:
+            self.ui.faceIdBtn.setEnabled(True)
+            self.ui.logLb.setText('图像载入完毕，等待人脸比对命令...')
+        elif self.lpic:
+            self.ui.logLb.setText('左侧图像载入完毕')
+        elif self.rpic:
+            self.ui.logLb.setText('右侧图像载入完毕')
+
+    def switchBtnState(self):
+        if self.ui.camLBtn.isEnabled():
+            self.ui.camLBtn.setEnabled(False)
+            self.ui.fileLBtn.setEnabled(False)
+            self.ui.dbLBtn.setEnabled(False)
+            self.ui.camRBtn.setEnabled(False)
+            self.ui.fileRBtn.setEnabled(False)
+            self.ui.dbRBtn.setEnabled(False)
+        else:
+            self.ui.camLBtn.setEnabled(True)
+            self.ui.fileLBtn.setEnabled(True)
+            self.ui.dbLBtn.setEnabled(True)
+            self.ui.camRBtn.setEnabled(True)
+            self.ui.fileRBtn.setEnabled(True)
+            self.ui.dbRBtn.setEnabled(True)
+        
 class MainWindow(QMainWindow):
     admin_state = False
 
@@ -270,6 +523,8 @@ class MainWindow(QMainWindow):
         self.ui = ui_app.Ui_MainWindow()  # 初始化界面
         self.ui.setupUi(self)
         self.admin_state = False
+        self.faceManager = None
+        self.faceIdentity = None
         # 连接信号和槽
         self.ui.camRecoBtn.clicked.connect(self.camReco)
         self.ui.fileRecoBtn.clicked.connect(self.fileReco)
@@ -293,6 +548,12 @@ class MainWindow(QMainWindow):
         else:
             self.admin_state = False
             self.writeLog('-> User mode')
+            if self.faceManager is not None:
+                self.faceManager.close()  # 关闭管理窗口
+                self.faceManager = None  # 重置引用，确保窗口被垃圾回收
+            if self.faceIdentity is not None:
+                self.faceIdentity.close()  # 关闭管理窗口
+                self.faceIdentity = None  # 重置引用，确保窗口被垃圾回收
             self.ui.userLb.setText('User')
             self.ui.switchUserBtn.setText('管理员登录')
             self.ui.openFaceMgrBtn.setEnabled(False)
