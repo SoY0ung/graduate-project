@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'app.ui'
+# Form implementation generated from reading ui file '.\app.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(373, 528)
+        MainWindow.resize(370, 528)
         MainWindow.setMinimumSize(QtCore.QSize(370, 520))
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -117,9 +117,15 @@ class Ui_MainWindow(object):
         self.faceMgrFuncHLayout.addWidget(self.openFaceMgrBtn)
         spacerItem7 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.faceMgrFuncHLayout.addItem(spacerItem7)
+        self.faceIdentityBtn = QtWidgets.QPushButton(self.centralwidget)
+        self.faceIdentityBtn.setEnabled(False)
+        self.faceIdentityBtn.setObjectName("faceIdentityBtn")
+        self.faceMgrFuncHLayout.addWidget(self.faceIdentityBtn)
+        spacerItem8 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.faceMgrFuncHLayout.addItem(spacerItem8)
         self.rootVLayout.addLayout(self.faceMgrFuncHLayout)
-        spacerItem8 = QtWidgets.QSpacerItem(20, 10, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-        self.rootVLayout.addItem(spacerItem8)
+        spacerItem9 = QtWidgets.QSpacerItem(20, 10, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        self.rootVLayout.addItem(spacerItem9)
         self.debugHLayout = QtWidgets.QHBoxLayout()
         self.debugHLayout.setObjectName("debugHLayout")
         self.label_5 = QtWidgets.QLabel(self.centralwidget)
@@ -142,18 +148,18 @@ class Ui_MainWindow(object):
         self.rootVLayout.addWidget(self.debugOutputTextEdit)
         self.reservedHLayout = QtWidgets.QHBoxLayout()
         self.reservedHLayout.setObjectName("reservedHLayout")
-        spacerItem9 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.reservedHLayout.addItem(spacerItem9)
+        spacerItem10 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.reservedHLayout.addItem(spacerItem10)
         self.reservedLBtn = QtWidgets.QPushButton(self.centralwidget)
         self.reservedLBtn.setObjectName("reservedLBtn")
         self.reservedHLayout.addWidget(self.reservedLBtn)
-        spacerItem10 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.reservedHLayout.addItem(spacerItem10)
+        spacerItem11 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.reservedHLayout.addItem(spacerItem11)
         self.reservedRBtn = QtWidgets.QPushButton(self.centralwidget)
         self.reservedRBtn.setObjectName("reservedRBtn")
         self.reservedHLayout.addWidget(self.reservedRBtn)
-        spacerItem11 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.reservedHLayout.addItem(spacerItem11)
+        spacerItem12 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.reservedHLayout.addItem(spacerItem12)
         self.rootVLayout.addLayout(self.reservedHLayout)
         self.horizontalLayout_2.addLayout(self.rootVLayout)
         MainWindow.setCentralWidget(self.centralwidget)
@@ -167,15 +173,16 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "人脸识别系统"))
-        self.winTitle.setText(_translate("MainWindow", "人脸识别系统"))
+        self.winTitle.setText(_translate("MainWindow", "人脸识别比对系统"))
         self.const_userLb.setText(_translate("MainWindow", "当前用户："))
         self.userLb.setText(_translate("MainWindow", "User"))
         self.switchUserBtn.setText(_translate("MainWindow", "管理员登录"))
-        self.label.setText(_translate("MainWindow", "人脸比对"))
-        self.camRecoBtn.setText(_translate("MainWindow", "从相机中比对"))
-        self.fileRecoBtn.setText(_translate("MainWindow", "从文件中比对"))
-        self.label_4.setText(_translate("MainWindow", "人脸库管理（仅管理员）"))
-        self.openFaceMgrBtn.setText(_translate("MainWindow", "打开管理窗口"))
+        self.label.setText(_translate("MainWindow", "人脸识别"))
+        self.camRecoBtn.setText(_translate("MainWindow", "从相机中识别"))
+        self.fileRecoBtn.setText(_translate("MainWindow", "从文件中识别"))
+        self.label_4.setText(_translate("MainWindow", "管理员选项"))
+        self.openFaceMgrBtn.setText(_translate("MainWindow", "人脸库管理"))
+        self.faceIdentityBtn.setText(_translate("MainWindow", "人脸比对"))
         self.label_5.setText(_translate("MainWindow", "DEBUG"))
         self.reservedLBtn.setText(_translate("MainWindow", "调试按钮（左）"))
         self.reservedRBtn.setText(_translate("MainWindow", "调试按钮（右）"))
