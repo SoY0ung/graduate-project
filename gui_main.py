@@ -1,8 +1,5 @@
 import io
 from PIL import Image
-import os
-import subprocess
-import matplotlib.pyplot as plt
 import sys
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QFileDialog, QDialog, QInputDialog, QLineEdit, QWidget, QVBoxLayout, QLabel
@@ -14,7 +11,7 @@ from faceutil import FaceUtil
 
 
 ## 配置区域
-database_path = 'database/'
+database_path = 'database-demo/'
 faceutil = None
 threshold = 1.10
 pwd = '123456'
@@ -469,7 +466,7 @@ class FaceIdentityWindow(QMainWindow):
     def faceId(self):
         dist = self.faceutil.get_distance(self.limg, self.rimg)
         self.logFunc(f"Face distance: {dist}")
-        if dist<threshold:
+        if dist<threshold-0.2:
             QMessageBox.information(self, "比对完毕",
                                  f"两张图像是同一个人",
                                  QMessageBox.Ok)
